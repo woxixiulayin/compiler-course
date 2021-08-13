@@ -1,6 +1,6 @@
-# ReScript Project Template
+# 极客时间-编译原理之美的练习
 
-The only official ReScript starter template.
+
 
 ## Installation
 
