@@ -1,0 +1,10 @@
+{
+  "saveAndRun": {
+    "commands": [
+      {
+        "match": "\\.res$",
+        "cmd": "node ${fileDirname}/${fileBasenameNoExt}.bs.js"
+      }
+    ]
+  }
+}
