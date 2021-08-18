@@ -16,38 +16,32 @@ type state =
 | GE
 | IntLitera
 
-let currentTokenType = ref(Identity)
-let currentTokenText = ref("")
+type digit = [#"1" | #"2" | #"3" | #"4" | #"5" | #"6" | #"7" | #"8" | #"9" | #"10"]
+type tokenStruct = { tokenType: tokenType, text: int }
 
 let handleInitial = ch => {
-    currentTokenText := ch
-  if isAlpha(ch) {
-    currentTokenType := Identity
-    ID
-  } else if isDigit(ch) {
-    currentTokenType := IntLitera
-    IntLitera
-  } else if ch === ">" {
-    currentTokenType := GE
-    GE
-  } else {
-    ID
+  switch ch {
+    | #...digit => { tokenType: IntLitera, text: ch}
+    // | ">" => { tokenType: GE, text: ch }
+    | _ => { tokenType: ID, text: ch }
   }
 }
 
 // let handleInitial = ch => {
-
 // }
 
-let parse = (input: string) => {
-  let current = ref(0)
-  let state = ref(GT)
-  let len = String.length(input)
-  while current.contents < len {
-    let ch = String.make(1, String.get(input, current.contents))
-    state := switch state.contents {
-    | Initial => handleInitial(ch)
-    }
-    current := current.contents + 1
-  }
-}
+// let parse = (input: string) => {
+//   let len = String.length(input)
+//   let curIndex = ref(0)
+//   let curState = ref(Initial)
+//   let curToken = ref()
+//   while curIndex.contents < len {
+//     let ch = String.make(1, String.get(input, curIndex.contents))
+//     let (state, token) = switch curState.contents {
+//       | Initial => handleInitial(ch)
+//     }
+//     curState := state
+//     curToken := token
+//     curIndex := curIndex.contents + 1
+//   }
+// }
