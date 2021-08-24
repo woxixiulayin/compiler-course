@@ -16,32 +16,71 @@ type state =
 | GE
 | IntLitera
 
-type digit = [#"1" | #"2" | #"3" | #"4" | #"5" | #"6" | #"7" | #"8" | #"9" | #"10"]
-type tokenStruct = { tokenType: tokenType, text: int }
+// token对象
+type itoken = { tokenType: tokenType, text: string }
 
-let handleInitial = ch => {
+// 处理初始状态
+let handleInitial = (ch, _) => {
   switch ch {
-    | #...digit => { tokenType: IntLitera, text: ch}
-    // | ">" => { tokenType: GE, text: ch }
-    | _ => { tokenType: ID, text: ch }
+    | _ if isDigit(ch) => (IntLitera, { tokenType: IntLitera, text: ch})
+    | ">" => (GT, { tokenType: GT, text: ch })
+    | _ => (ID, { tokenType: Identity, text: ch })
   }
 }
 
-// let handleInitial = ch => {
-// }
+// 处理ID状态
+let handleId = (ch, token: itoken) => {
+  switch ch {
+  | " " => (Initial, token)
+  | _ => (ID, { tokenType: Identity, text: token.text ++ ch })
+  }
+}
 
-// let parse = (input: string) => {
-//   let len = String.length(input)
-//   let curIndex = ref(0)
-//   let curState = ref(Initial)
-//   let curToken = ref()
-//   while curIndex.contents < len {
-//     let ch = String.make(1, String.get(input, curIndex.contents))
-//     let (state, token) = switch curState.contents {
-//       | Initial => handleInitial(ch)
-//     }
-//     curState := state
-//     curToken := token
-//     curIndex := curIndex.contents + 1
-//   }
-// }
+
+let handleGT = (ch, token: itoken) => {
+  switch ch {
+  | " " => (Initial, token)
+  | "=" => (GE, { tokenType: GE, text: token.text ++ ch })
+  | _ => (Initial, token)
+  }
+}
+let handleGE = (ch, token: itoken) => {
+  switch ch {
+  | " " => (Initial, token)
+  | _ => (Initial, token)
+  }
+}
+
+let handleIntLitera = (ch, token: itoken) => {
+  switch ch {
+  | _ if isDigit(ch) => (IntLitera, {tokenType: IntLitera, text: token.text ++ ch})
+  | " " => (Initial, token)
+  | _ => (Initial, token)
+  }
+}
+
+let parse = (input: string) => {
+  let len = String.length(input)
+  let curIndex = ref(0)
+  let curState = ref(Initial)
+  let curToken = ref({ tokenType: Identity, text: "" })
+  while curIndex.contents < len {
+    let ch = String.make(1, String.get(input, curIndex.contents))
+    let handler = switch curState.contents {
+      | Initial => handleInitial
+      | ID => handleId
+      | GE => handleGE
+      | GT => handleGT
+      | IntLitera => handleIntLitera
+    }
+    let (state, tempToken) = handler(ch, curToken.contents)
+    curState := state
+    curToken := tempToken
+    curIndex := curIndex.contents + 1
+    if curState.contents === Initial {
+      Js.log(curToken.contents)
+    }
+  }
+}
+
+parse("a = 1")
