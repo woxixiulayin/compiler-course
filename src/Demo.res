@@ -2,85 +2,97 @@ let isDigit = ch => Js_re.test_(%re("/[0-9]/"), ch)
 let isAlpha = ch => Js_re.test_(%re("/[a-zA-Z]/"), ch)
 
 // token类型
-type tokenType =
-| Identity
-| IntLitera
-| GT
-| GE
+type tokenType = [
+| #Identity
+| #IntLiteral
+| #GT
+| #GE
+| #Assign
+]
 
 // 有限状态机状态
-type state =
-| Initial
-| ID
-| GT
-| GE
-| IntLitera
+type state = [
+| #Initial
+| tokenType
+]
 
-// token对象
-type itoken = { tokenType: tokenType, text: string }
+
+// 关键字
+type keyword = [ #"int" ]
 
 // 处理初始状态
-let handleInitial = (ch, _) => {
+let handleInitial = ch => {
   switch ch {
-    | _ if isDigit(ch) => (IntLitera, { tokenType: IntLitera, text: ch})
-    | ">" => (GT, { tokenType: GT, text: ch })
-    | _ => (ID, { tokenType: Identity, text: ch })
+    | _ if isDigit(ch) => #IntLiteral
+    | ">" => #GT
+    | " " => #Initial
+    | "=" => #Assign
+    | _ => #Identity
   }
 }
 
 // 处理ID状态
-let handleId = (ch, token: itoken) => {
+let handleId = ch => {
   switch ch {
-  | " " => (Initial, token)
-  | _ => (ID, { tokenType: Identity, text: token.text ++ ch })
+  | " " => #Initial
+  | _ => #Identity
   }
 }
 
 
-let handleGT = (ch, token: itoken) => {
+let handleGT = ch=> {
   switch ch {
-  | " " => (Initial, token)
-  | "=" => (GE, { tokenType: GE, text: token.text ++ ch })
-  | _ => (Initial, token)
+  | " " => #Initial
+  | "=" => #GE
+  | _ => #Initial
   }
 }
-let handleGE = (ch, token: itoken) => {
+let handleGE = ch => {
   switch ch {
-  | " " => (Initial, token)
-  | _ => (Initial, token)
+  | " " => #Initial
+  | _ => #Initial
   }
 }
 
-let handleIntLitera = (ch, token: itoken) => {
+let handleIntLiteral = ch => {
   switch ch {
-  | _ if isDigit(ch) => (IntLitera, {tokenType: IntLitera, text: token.text ++ ch})
-  | " " => (Initial, token)
-  | _ => (Initial, token)
+  | _ if isDigit(ch) => #IntLiteral
+  | " " => #Initial
+  | _ => #Initial
+  }
+}
+let handleAssign = ch => {
+  switch ch {
+  | _ => #Initial
   }
 }
 
 let parse = (input: string) => {
   let len = String.length(input)
   let curIndex = ref(0)
-  let curState = ref(Initial)
-  let curToken = ref({ tokenType: Identity, text: "" })
-  while curIndex.contents < len {
-    let ch = String.make(1, String.get(input, curIndex.contents))
-    let handler = switch curState.contents {
-      | Initial => handleInitial
-      | ID => handleId
-      | GE => handleGE
-      | GT => handleGT
-      | IntLitera => handleIntLitera
+  let currentContent = ref("")
+  let lastState: ref<state> = ref(#Initial)
+  while curIndex.contents <= len {
+    let ch = Js.String.get(input, curIndex.contents)
+    let currentState = switch lastState.contents {
+    | #Initial => handleInitial(ch)
+    | #Identity => handleId(ch)
+    | #IntLiteral => handleIntLiteral(ch)
+    | #GT => handleGT(ch)
+    | #GE => handleGE(ch)
+    | #Assign => handleAssign(ch)
     }
-    let (state, tempToken) = handler(ch, curToken.contents)
-    curState := state
-    curToken := tempToken
+
+    if currentState === #Initial && lastState.contents !== #Initial {
+      Js.log(`${currentContent.contents} ${lastState.contents :> string}`)
+      currentContent := ""
+    } else {
+      currentContent := currentContent.contents ++ ch
+    }
     curIndex := curIndex.contents + 1
-    if curState.contents === Initial {
-      Js.log(curToken.contents)
-    }
+    lastState := currentState
   }
+
 }
 
-parse("a = 1")
+parse("int age = 1222")
